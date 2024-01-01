@@ -93,6 +93,8 @@ def main() -> None:
         result = input(
             "Enter result (Y = green, ? = amber, or N = grey, e.g. YYN?N) > "
         )
+        new_min_letter_count = {c: 0 for c in string.ascii_lowercase}
+        new_max_letter_count = {c: 5 for c in string.ascii_lowercase}
         success = True
         if len(result) != 5:
             print("Incorrect length. Try again.")
@@ -102,31 +104,38 @@ def main() -> None:
                 print("Invalid character. Try again.")
                 success = False
             else:
-                min_letter_count = {c: 0 for c in string.ascii_lowercase}
-                max_letter_count = {c: 5 for c in string.ascii_lowercase}
                 for i, c in enumerate(result.upper()):
                     word_c = best_word[i]
                     if c == 'Y':
                         # Character must be this letter
                         possible_letters[i] = {word_c}
-                        min_letter_count[word_c] += 1
+                        new_min_letter_count[word_c] += 1
                     elif c == '?':
                         # Character cannot be this letter,
                         # but it is in the word
                         possible_letters[i].discard(word_c)
-                        min_letter_count[word_c] += 1
+                        new_min_letter_count[word_c] += 1
                     elif c == 'N':
                         # Character cannot be this letter
                         # and it cannot appear any more times than it has
                         # been accepted
                         possible_letters[i].discard(word_c)
                         # Use -1 to flag that the value needs to be filled
-                        max_letter_count[word_c] = -1
+                        new_max_letter_count[word_c] = -1
         if success:
-            for letter, max_count in max_letter_count.items():
-                if max_count != -1:
-                    continue
-                max_letter_count[letter] = min_letter_count[letter]
+            # Only update min/max values if they are greater/less than the
+            # existing ones
+            for letter, max_count in new_max_letter_count.items():
+                if max_count == -1:
+                    # Min count = number of times the letter was accepted.
+                    # Any more times is known to be wrong, so set min to also
+                    # be the max.
+                    new_max_letter_count[letter] = new_min_letter_count[letter]
+                if new_max_letter_count[letter] < max_letter_count[letter]:
+                    max_letter_count[letter] = new_max_letter_count[letter]
+            for letter, min_count in new_min_letter_count.items():
+                if min_count > min_letter_count[letter]:
+                    min_letter_count[letter] = min_count
 
 
 if __name__ == "__main__":
