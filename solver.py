@@ -1,13 +1,12 @@
-import random
 import string
 
 
-def get_word_list(path: str = "wordlist.txt") -> list[str]:
+def get_word_list(path: str = "wordlist.txt") -> set[str]:
     with open(path, encoding="utf8") as word_file:
-        return word_file.read().strip().splitlines()
+        return set(word_file.read().strip().splitlines())
 
 
-def get_letter_counts(word_list: list[str]) -> dict[str, list[int]]:
+def get_letter_counts(word_list: set[str]) -> dict[str, list[int]]:
     """
     Get the number of times each letter of the alphabet appears in each
     position of every word in the word list.
@@ -26,7 +25,7 @@ def score_word(word: str, letter_counts: dict[str, list[int]]):
     return score
 
 
-def get_possible_words(word_list: list[str], possible_letters: list[set[str]],
+def get_possible_words(word_list: set[str], possible_letters: list[set[str]],
                        min_letter_count: dict[str, int],
                        max_letter_count: dict[str, int]) -> list[str]:
     """
@@ -62,9 +61,6 @@ def get_possible_words(word_list: list[str], possible_letters: list[set[str]],
 
 def main() -> None:
     word_list = get_word_list()
-    # Shuffle the word list so that words with the same score will be decided
-    # randomly
-    random.shuffle(word_list)
     letter_counts = get_letter_counts(word_list)
     possible_letters = [set(string.ascii_lowercase) for _ in range(5)]
     min_letter_count = {c: 0 for c in string.ascii_lowercase}
@@ -90,52 +86,57 @@ def main() -> None:
             f"\nTry this word: {best_word.upper()}\n"
             f"({len(possible_words)} possible words remaining)"
         )
+        used_word = input(
+            "Enter the word that you tried, or leave blank if you used the "
+            "recommended word > "
+        ).lower()
+        if used_word.strip() == "":
+            used_word = best_word
+        if used_word not in word_list:
+            print("Entered word is not present in the word list.")
+            continue
         result = input(
             "Enter result (Y = green, ? = amber, or N = grey, e.g. YYN?N) > "
-        )
+        ).upper()
         new_min_letter_count = {c: 0 for c in string.ascii_lowercase}
         new_max_letter_count = {c: 5 for c in string.ascii_lowercase}
-        success = True
         if len(result) != 5:
             print("Incorrect length. Try again.")
-            success = False
-        else:
-            if not set(result).issubset({'Y', 'N', '?'}):
-                print("Invalid character. Try again.")
-                success = False
-            else:
-                for i, c in enumerate(result.upper()):
-                    word_c = best_word[i]
-                    if c == 'Y':
-                        # Character must be this letter
-                        possible_letters[i] = {word_c}
-                        new_min_letter_count[word_c] += 1
-                    elif c == '?':
-                        # Character cannot be this letter,
-                        # but it is in the word
-                        possible_letters[i].discard(word_c)
-                        new_min_letter_count[word_c] += 1
-                    elif c == 'N':
-                        # Character cannot be this letter
-                        # and it cannot appear any more times than it has
-                        # been accepted
-                        possible_letters[i].discard(word_c)
-                        # Use -1 to flag that the value needs to be filled
-                        new_max_letter_count[word_c] = -1
-        if success:
-            # Only update min/max values if they are greater/less than the
-            # existing ones
-            for letter, max_count in new_max_letter_count.items():
-                if max_count == -1:
-                    # Min count = number of times the letter was accepted.
-                    # Any more times is known to be wrong, so set min to also
-                    # be the max.
-                    new_max_letter_count[letter] = new_min_letter_count[letter]
-                if new_max_letter_count[letter] < max_letter_count[letter]:
-                    max_letter_count[letter] = new_max_letter_count[letter]
-            for letter, min_count in new_min_letter_count.items():
-                if min_count > min_letter_count[letter]:
-                    min_letter_count[letter] = min_count
+            continue
+        if not set(result).issubset({'Y', 'N', '?'}):
+            print("Invalid character. Try again.")
+            continue
+        for i, c in enumerate(result):
+            word_c = used_word[i]
+            if c == 'Y':
+                # Character must be this letter
+                possible_letters[i] = {word_c}
+                new_min_letter_count[word_c] += 1
+            elif c == '?':
+                # Character cannot be this letter,
+                # but it is in the word
+                possible_letters[i].discard(word_c)
+                new_min_letter_count[word_c] += 1
+            elif c == 'N':
+                # Character cannot be this letter
+                # and it cannot appear any more times than it has
+                # been accepted
+                possible_letters[i].discard(word_c)
+                # Use -1 to flag that the value needs to be filled
+                new_max_letter_count[word_c] = -1
+        # Only update min/max values if they are greater/less than the
+        # existing ones
+        for letter, max_count in new_max_letter_count.items():
+            if max_count == -1:
+                # Min count = number of times the letter was accepted.
+                # Any more times is known to be wrong, so set min to also
+                # be the max.
+                new_max_letter_count[letter] = new_min_letter_count[letter]
+            if new_max_letter_count[letter] < max_letter_count[letter]:
+                max_letter_count[letter] = new_max_letter_count[letter]
+        for letter, min_count in new_min_letter_count.items():
+            if min_count > min_letter_count[letter]:
+                min_letter_count[letter] = min_count
 
 
 if __name__ == "__main__":
