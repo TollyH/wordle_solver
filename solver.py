@@ -1,4 +1,5 @@
 import string
+from collections import Counter
 
 
 def get_word_list(path: str = "wordlist.txt") -> set[str]:
@@ -20,8 +21,11 @@ def get_letter_counts(word_list: set[str]) -> dict[str, list[int]]:
 
 def score_word(word: str, letter_counts: dict[str, list[int]]):
     score = 0
+    # Disincentivise repeating the same letter multiple times
+    times_seen: Counter[str] = Counter()
     for i, c in enumerate(word):
-        score += letter_counts[c][i]
+        times_seen[c] += 1
+        score += letter_counts[c][i] / times_seen[c]
     return score
 
 
