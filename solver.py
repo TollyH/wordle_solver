@@ -1,4 +1,6 @@
+import random
 import string
+import sys
 from collections import Counter
 
 
@@ -19,13 +21,16 @@ def get_letter_counts(word_list: set[str]) -> dict[str, list[int]]:
     return counts
 
 
-def score_word(word: str, letter_counts: dict[str, list[int]]):
+def score_word(word: str, letter_counts: dict[str, list[int]],
+               random_deviation: bool):
     score = 0
     # Disincentivise repeating the same letter multiple times
     times_seen: Counter[str] = Counter()
     for i, c in enumerate(word):
         times_seen[c] += 1
         score += letter_counts[c][i] / times_seen[c]
+    if random_deviation:
+        score *= random.uniform(0.8, 1.2)
     return score
 
 
@@ -63,7 +68,7 @@ def get_possible_words(word_list: set[str], possible_letters: list[set[str]],
     return possible_words
 
 
-def main() -> None:
+def main(random_deviation: bool) -> None:
     word_list = get_word_list()
     letter_counts = get_letter_counts(word_list)
     possible_letters = [set(string.ascii_lowercase) for _ in range(5)]
@@ -81,7 +86,8 @@ def main() -> None:
             )
             break
         possible_words.sort(
-            key=lambda w: score_word(w, letter_counts), reverse=True
+            key=lambda w: score_word(w, letter_counts, random_deviation),
+            reverse=True
         )
         best_word = possible_words[0]
         if len(possible_words) == 1:
@@ -149,4 +155,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    main("--no-random" not in sys.argv)
