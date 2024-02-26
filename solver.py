@@ -80,9 +80,10 @@ def main() -> None:
                 "recommended words?"
             )
             break
-        best_word = max(
-            possible_words, key=lambda w: score_word(w, letter_counts)
+        possible_words.sort(
+            key=lambda w: score_word(w, letter_counts), reverse=True
         )
+        best_word = possible_words[0]
         if len(possible_words) == 1:
             print(f"\nThe word must be: {best_word.upper()}")
             break
@@ -91,11 +92,15 @@ def main() -> None:
             f"({len(possible_words)} possible words remaining)"
         )
         used_word = input(
-            "Enter the word that you tried, or leave blank if you used the "
-            "recommended word > "
+            "Enter the word that you tried, leave blank if you used the "
+            "recommended word, or type \"list\" to see all possible words > "
         ).lower()
         if used_word.strip() == "":
             used_word = best_word
+        if used_word == "list":
+            for poss_word in possible_words:
+                print(poss_word.upper())
+            continue
         if used_word not in word_list:
             print("Entered word is not present in the word list.")
             continue
